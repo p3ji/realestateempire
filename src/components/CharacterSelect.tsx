@@ -3,16 +3,23 @@ import { ARCHETYPES } from '../constants';
 import { formatCurrency } from '../utils';
 
 interface CharacterSelectProps {
-  onSelect: (name: string, archetypeKey: string) => void;
+  onSelect: (name: string, archetypeKey: string) => void | Promise<void>;
 }
 
 export const CharacterSelect: React.FC<CharacterSelectProps> = ({ onSelect }) => {
   const [name, setName] = useState('');
   const [selectedKey, setSelectedKey] = useState<string>('tech');
+  const [loading, setLoading] = useState(false);
 
-  const handleStart = (e: React.FormEvent) => {
+  const handleStart = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSelect(name, selectedKey);
+    if (loading) return;
+    setLoading(true);
+    try {
+      await onSelect(name, selectedKey);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -187,6 +194,7 @@ export const CharacterSelect: React.FC<CharacterSelectProps> = ({ onSelect }) =>
 
           <button
             type="submit"
+            disabled={loading}
             className="btn-neon-filled"
             style={{
               '--neon-color': 'var(--cyber-green)',
@@ -196,7 +204,7 @@ export const CharacterSelect: React.FC<CharacterSelectProps> = ({ onSelect }) =>
               letterSpacing: '2px'
             } as React.CSSProperties}
           >
-            COMMENCE HUSTLE
+            {loading ? 'SCANNING OTTAWA PROPERTY REGISTRY...' : 'COMMENCE HUSTLE'}
           </button>
         </form>
       </div>

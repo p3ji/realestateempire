@@ -3,6 +3,7 @@ import { useGameState } from './useGameState';
 import { CharacterSelect } from './components/CharacterSelect';
 import { Sidebar } from './components/Sidebar';
 import { Map } from './components/Map';
+import { MapErrorBoundary } from './components/MapErrorBoundary';
 import { PropertyInspector } from './components/PropertyInspector';
 import { Leaderboard } from './components/Leaderboard';
 import { TransactionLog } from './components/TransactionLog';
@@ -75,12 +76,14 @@ export const App: React.FC = () => {
         position: 'relative',
         zIndex: 1
       }}>
-        <Map
-          properties={gameState.properties}
-          competitors={gameState.competitors}
-          selectedPropertyId={gameState.selectedPropertyId}
-          onSelectProperty={handleSelectProperty}
-        />
+        <MapErrorBoundary>
+          <Map
+            properties={gameState.properties}
+            competitors={gameState.competitors}
+            selectedPropertyId={gameState.selectedPropertyId}
+            onSelectProperty={handleSelectProperty}
+          />
+        </MapErrorBoundary>
       </div>
 
       {/* Right Dynamic HUD Slide-out Sidebar Panel */}
@@ -103,6 +106,7 @@ export const App: React.FC = () => {
                 property={selectedProperty}
                 player={gameState.player}
                 competitors={gameState.competitors}
+                allProperties={gameState.properties}
                 onClose={() => selectProperty(null)}
                 onPurchase={purchaseProperty}
                 onSell={sellProperty}

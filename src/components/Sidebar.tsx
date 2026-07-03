@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return sum + Math.round((p.marketValue * taxRate) / 12);
   }, 0);
   const maintenanceExpense = playerProperties.reduce((sum, p) => {
-    const conditionPenalty = (100 - p.condition) * 0.01;
+    const conditionPenalty = (100 - p.condition) * 0.0004; // matches game-loop formula
     return sum + Math.round((p.marketValue * (0.008 + conditionPenalty)) / 12);
   }, 0);
   const mortgageExpense = playerProperties.reduce((sum, p) => {

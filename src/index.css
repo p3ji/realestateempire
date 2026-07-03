@@ -100,9 +100,17 @@ body {
   outline: none;
 }
 
-/* Glow overlays for Leaflet */
-.leaflet-tile-container img {
+/* Per-layer tile treatments */
+/* Satellite: dark tactical night-vision tint */
+.tiles-satellite img.leaflet-tile {
   filter: contrast(1.1) brightness(0.7) saturate(0.8) hue-rotate(200deg);
+}
+.tiles-satellite-labels img.leaflet-tile {
+  filter: brightness(1.1);
+}
+/* Illustrated: warm parchment board-game tint to match hand-drawn sprites */
+.tiles-styled img.leaflet-tile {
+  filter: sepia(0.38) saturate(0.82) brightness(1.01) contrast(0.94);
 }
 
 .leaflet-bar {
@@ -122,6 +130,132 @@ body {
 .leaflet-bar a:hover {
   background-color: var(--bg-tertiary) !important;
   color: var(--text-primary) !important;
+}
+
+/* Sprite token markers (illustrated building art from the sprite sheet) */
+.sprite-token-container {
+  background: transparent;
+  border: none;
+}
+
+.sprite-token {
+  width: 46px;
+  height: 46px;
+  border-radius: 9px;
+  overflow: visible;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+}
+
+.sprite-token img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 7px;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sprite-token:hover {
+  transform: scale(1.25);
+  z-index: 9999;
+}
+
+/* For sale: blue border */
+.sprite-token.for-sale {
+  border: 2px solid #3f9bff;
+  box-shadow: 0 0 10px rgba(63, 155, 255, 0.55), 0 3px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Player owned: green pulse */
+.sprite-token.owned-player {
+  border: 2px solid var(--cyber-green);
+  animation: token-pulse 2.2s infinite ease-in-out;
+}
+
+@keyframes token-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(57, 255, 20, 0.45), 0 3px 8px rgba(0, 0, 0, 0.45); }
+  50% { box-shadow: 0 0 18px rgba(57, 255, 20, 0.85), 0 3px 8px rgba(0, 0, 0, 0.45); }
+}
+
+/* Competitor owned: their color */
+.sprite-token.owned-competitor {
+  border: 2px solid var(--token-color, var(--cyber-purple));
+  box-shadow: 0 0 8px var(--token-color, var(--cyber-purple)), 0 3px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Owner badge chip */
+.token-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #000;
+  border: 1.5px solid rgba(0, 0, 0, 0.55);
+  font-family: var(--font-sans);
+}
+.token-badge.badge-player {
+  background: var(--cyber-green);
+}
+
+/* Selected: rotating dashed ring */
+.sprite-token.selected::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border: 2px dashed var(--cyber-blue);
+  border-radius: 12px;
+  animation: slow-rotate 10s linear infinite;
+}
+
+/* Map style toggle control */
+.map-style-toggle {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.map-style-toggle button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-style-toggle button:hover {
+  color: var(--text-primary);
+}
+
+.map-style-toggle button.active {
+  background: var(--cyber-blue);
+  color: #000;
 }
 
 /* Glowing Marker Icon styles */

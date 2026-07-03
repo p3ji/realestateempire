@@ -8,6 +8,7 @@ interface PropertyInspectorProps {
   property: Property;
   player: Player;
   competitors: AICompetitor[];
+  allProperties: Property[];
   onClose: () => void;
   onPurchase: (propertyId: string, useMortgage: boolean, downPayment: number) => void;
   onSell: (propertyId: string) => void;
@@ -18,6 +19,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
   property,
   player,
   competitors,
+  allProperties,
   onClose,
   onPurchase,
   onSell,
@@ -58,8 +60,8 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
   const taxRate = neighborhoodObj ? neighborhoodObj.taxRate : 0.01;
   const estTaxMonthly = Math.round((property.marketValue * taxRate) / 12);
   
-  // Maintenance cost monthly
-  const conditionPenalty = (100 - property.condition) * 0.01;
+  // Maintenance cost monthly (matches game-loop formula)
+  const conditionPenalty = (100 - property.condition) * 0.0004;
   const estMaintMonthly = Math.round((property.marketValue * (0.008 + conditionPenalty)) / 12);
 
   // Total cash flow simulation if player buys it
@@ -72,11 +74,21 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
     ? player.cash >= downPayment 
     : player.cash >= property.marketValue;
 
-  // DTI (Debt-to-Income) check for mortgage approval: 
-  // Mortgage payment + other debts shouldn't exceed 45% of monthly salary
+  // DTI (Debt-to-Income) check for mortgage approval:
+  // Mortgage payment + other debts shouldn't exceed 45% of qualifying income.
+  // Like real lenders, 80% of rental income counts (existing portfolio + this unit).
   const monthlySalary = player.salary / 12;
-  const totalMonthlyDebtPayments = player.monthlyDebtPayment + estMortgagePayment;
-  const dtiRatio = totalMonthlyDebtPayments / monthlySalary;
+  const existingRentalIncome = allProperties
+    .filter(p => p.ownerId === 'player')
+    .reduce((sum, p) => sum + p.rent * p.occupancyRate, 0);
+  const existingMortgagePayments = allProperties
+    .filter(p => p.ownerId === 'player' && p.mortgage)
+    .reduce((sum, p) => sum + (p.mortgage ? p.mortgage.monthlyPayment : 0), 0);
+  const qualifyingIncome = monthlySalary +
+    0.8 * (existingRentalIncome + property.rent * property.occupancyRate);
+  const totalMonthlyDebtPayments =
+    player.monthlyDebtPayment + existingMortgagePayments + estMortgagePayment;
+  const dtiRatio = totalMonthlyDebtPayments / qualifyingIncome;
   const dtiApproved = !useMortgage || dtiRatio <= 0.45;
 
   const handlePurchase = () => {
@@ -141,6 +153,22 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
             <span>{property.neighborhood}</span>
             <span>&bull;</span>
             <span style={{ textTransform: 'uppercase', color: 'var(--cyber-blue)', fontWeight: 600 }}>{property.type}</span>
+            {property.isReal && (
+              <>
+                <span>&bull;</span>
+                <span title="This building exists — sourced from OpenStreetMap" style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: 'var(--cyber-green)',
+                  border: '1px solid rgba(57, 255, 20, 0.35)',
+                  borderRadius: '4px',
+                  padding: '1px 6px',
+                  letterSpacing: '0.5px'
+                }}>
+                  REAL PARCEL
+                </span>
+              </>
+            )}
           </div>
         </div>
 

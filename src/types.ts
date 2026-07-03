@@ -38,6 +38,8 @@ export interface Property {
   upgrades: PropertyUpgrade[];
   mortgage: Mortgage | null;
   appreciationRate: number; // yearly e.g. 0.04
+  sprite?: string; // building art token, e.g. 'single_family'
+  isReal?: boolean; // true when sourced from a real OpenStreetMap building
 }
 
 export interface Player {

@@ -1,5 +1,6 @@
 import type { Property, PropertyType, Mortgage, PropertyUpgrade } from './types';
 import { NEIGHBORHOODS, UPGRADES_TEMPLATES } from './constants';
+import type { OsmListings, OsmBuilding } from './osm';
 
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('en-CA', {
@@ -45,15 +46,103 @@ const generateRandomAddress = (neighborhoodKey: string, index: number): string =
   return `${number} ${street}`;
 };
 
-// Generate initial properties for Ottawa
-export const generateProperties = (): Property[] => {
+// Relative price weight of each building sprite vs the neighborhood's median home
+const SPRITE_PRICE_MULTIPLIERS: Record<string, number> = {
+  single_family: 1.0,
+  row_house: 0.8,
+  apartment: 1.9,
+  condo_tower: 3.6,
+  student_dorm: 2.2,
+  strip_mall: 2.2,
+  office_tower: 3.2,
+  skyscraper_cluster: 5.2,
+  historic_hotel: 3.8,
+  mega_mall: 5.0,
+  supermarket: 2.6,
+  parking_garage: 1.6,
+  warehouse: 2.8,
+  data_center: 4.2,
+  brewery: 2.4,
+  self_storage: 2.2,
+};
+
+const RENT_YIELD_BY_TYPE: Record<PropertyType, number> = {
+  residential: 0.005,
+  commercial: 0.0065,
+  industrial: 0.0075,
+};
+
+// Build a game property from a real OpenStreetMap building
+const buildFromOsm = (
+  key: string,
+  bld: OsmBuilding,
+  index: number,
+  isHeirStartingProperty: boolean
+): Property => {
+  const n = NEIGHBORHOODS[key];
+  const seed = bld.osmId % 1000;
+
+  let multiplier = SPRITE_PRICE_MULTIPLIERS[bld.sprite] ?? 1.0;
+  // Taller buildings are worth more (capped so prices stay playable)
+  if (bld.levels > 2) {
+    multiplier *= Math.min(1.6, 1 + (bld.levels - 2) * 0.06);
+  }
+  const variance = 0.85 + (seed % 30) / 100; // deterministic 0.85 - 1.14
+
+  const basePrice = Math.round((n.medianPrice * multiplier * variance) / 1000) * 1000;
+  const rentYield = RENT_YIELD_BY_TYPE[bld.gameType];
+  const baseRent = Math.round((basePrice * rentYield * (0.9 + (seed % 3) * 0.1)) / 50) * 50;
+
+  const upgrades: PropertyUpgrade[] = UPGRADES_TEMPLATES.map(u => ({ ...u, purchased: false }));
+
+  return {
+    id: `prop_${key}_${index + 1}`,
+    address: bld.name ? `${bld.address} (${bld.name})` : bld.address,
+    lat: bld.lat,
+    lng: bld.lng,
+    neighborhood: n.name,
+    type: bld.gameType,
+    price: basePrice,
+    marketValue: basePrice,
+    rent: baseRent,
+    basePrice,
+    baseRent,
+    occupancyRate: 0.85 + (seed % 4) * 0.05, // 0.85 - 1.0
+    condition: isHeirStartingProperty ? 40 : 70 + (seed % 6) * 5, // 70 - 95
+    ownerId: null,
+    ownerName: null,
+    upgrades,
+    mortgage: null,
+    appreciationRate: n.appreciationRate + ((seed % 3) - 1) * 0.005,
+    sprite: bld.sprite,
+    isReal: true,
+  };
+};
+
+// Generate initial properties for Ottawa. When real OpenStreetMap listings are
+// provided, neighborhoods with enough real buildings use those; any neighborhood
+// with too few falls back to synthetic listings.
+export const generateProperties = (listings?: OsmListings | null): Property[] => {
   const properties: Property[] = [];
-  let idCounter = 1;
 
   Object.entries(NEIGHBORHOODS).forEach(([key, n]) => {
-    // Generate ~8 properties per neighborhood
+    const osmBuildings = listings?.[key] ?? [];
+    if (osmBuildings.length >= 5) {
+      // Put a residential building first so the Heir's fixer-upper
+      // (prop_sandyhill_1) is always a home, not a mall
+      const sorted = [...osmBuildings].sort((a, b) =>
+        (a.gameType === 'residential' ? 0 : 1) - (b.gameType === 'residential' ? 0 : 1)
+      );
+      sorted.forEach((bld, i) => {
+        const isHeirStart = key === 'sandyhill' && i === 0;
+        properties.push(buildFromOsm(key, bld, i, isHeirStart));
+      });
+      return;
+    }
+
+    // Synthetic fallback: ~8 procedural properties for this neighborhood
     const numProperties = 8;
-    
+
     for (let i = 0; i < numProperties; i++) {
       const id = `prop_${key}_${i + 1}`;
       const address = generateRandomAddress(key, i);
@@ -86,10 +175,11 @@ export const generateProperties = (): Property[] => {
       
       const baseRent = Math.round((basePrice * rentYieldFactor * (0.9 + ((i * 7) % 3) * 0.1)) / 50) * 50;
 
-      // Make one duplex in Sandy Hill the starting property for the Heir archetype
+      // The first Sandy Hill duplex is a run-down fixer-upper; the Heir archetype
+      // starts owning it (assigned in startNewGame), otherwise it's for sale like any other
       const isHeirStartingProperty = (key === 'sandyhill' && i === 0);
-      const ownerId = isHeirStartingProperty ? 'heir_starting_placeholder' : null;
-      const ownerName = isHeirStartingProperty ? 'Player' : null;
+      const ownerId = null;
+      const ownerName = null;
 
       // Fresh upgrades list
       const upgrades: PropertyUpgrade[] = UPGRADES_TEMPLATES.map(u => ({
@@ -117,8 +207,6 @@ export const generateProperties = (): Property[] => {
         mortgage: null,
         appreciationRate: n.appreciationRate + (i % 3 - 1) * 0.005,
       });
-
-      idCounter++;
     }
   });
 
@@ -127,7 +215,7 @@ export const generateProperties = (): Property[] => {
 
 // Date math helper (starting July 2, 2026)
 export const getGameDateString = (daysElapsed: number): string => {
-  const startDate = new Date('2026-07-02');
+  const startDate = new Date(2026, 6, 2); // local time to avoid UTC off-by-one
   startDate.setDate(startDate.getDate() + daysElapsed);
   
   const yyyy = startDate.getFullYear();
