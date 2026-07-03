@@ -1,0 +1,330 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Core Theme Colors */
+  --bg-primary: #0a0b10;
+  --bg-secondary: #121420;
+  --bg-tertiary: #1b1e30;
+  --bg-glass: rgba(18, 20, 32, 0.75);
+  --bg-glass-bright: rgba(30, 34, 54, 0.85);
+  
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(59, 130, 246, 0.3);
+  
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  
+  /* Cyber Colors */
+  --cyber-blue: #00d2ff;
+  --cyber-blue-glow: rgba(0, 210, 255, 0.4);
+  --cyber-green: #39ff14;
+  --cyber-green-glow: rgba(57, 255, 20, 0.4);
+  --cyber-purple: #bd00ff;
+  --cyber-purple-glow: rgba(189, 0, 255, 0.4);
+  --cyber-orange: #ff9d00;
+  --cyber-orange-glow: rgba(255, 157, 0, 0.4);
+  --cyber-red: #ff0055;
+  --cyber-red-glow: rgba(255, 0, 85, 0.4);
+
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Orbitron', 'Courier New', monospace;
+
+  font-family: var(--font-sans);
+  color-scheme: dark;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  width: 100vw;
+  height: 100vh;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px var(--marker-glow-color, var(--cyber-blue-glow));
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 20px var(--marker-glow-color, var(--cyber-blue-glow));
+  }
+}
+
+@keyframes slow-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.25; }
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Leaflet Customizations for Cyber HUD style */
+.leaflet-container {
+  background: var(--bg-primary) !important;
+  font-family: var(--font-sans) !important;
+  outline: none;
+}
+
+/* Glow overlays for Leaflet */
+.leaflet-tile-container img {
+  filter: contrast(1.1) brightness(0.7) saturate(0.8) hue-rotate(200deg);
+}
+
+.leaflet-bar {
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 6px !important;
+  overflow: hidden;
+}
+
+.leaflet-bar a {
+  background-color: var(--bg-glass) !important;
+  color: var(--cyber-blue) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: all 0.2s ease;
+}
+
+.leaflet-bar a:hover {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Glowing Marker Icon styles */
+.hud-marker-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.hud-marker {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  animation: pulse-glow 2s infinite ease-in-out;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.hud-marker:hover {
+  transform: scale(1.3) !important;
+  z-index: 9999 !important;
+}
+
+/* Type colors */
+.hud-marker.residential {
+  --marker-glow-color: var(--cyber-blue-glow);
+  background-color: var(--cyber-blue);
+  border-color: #fff;
+}
+.hud-marker.commercial {
+  --marker-glow-color: var(--cyber-purple-glow);
+  background-color: var(--cyber-purple);
+  border-color: #fff;
+}
+.hud-marker.industrial {
+  --marker-glow-color: var(--cyber-orange-glow);
+  background-color: var(--cyber-orange);
+  border-color: #fff;
+}
+
+/* Owner variations */
+.hud-marker.owned-player {
+  --marker-glow-color: var(--cyber-green-glow);
+  background-color: var(--cyber-green);
+  color: #000;
+}
+.hud-marker.owned-competitor {
+  border-color: #fff;
+}
+
+/* Glowing ring for selected marker */
+.hud-marker.selected::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 2px dashed var(--cyber-blue);
+  border-radius: 50%;
+  animation: slow-rotate 10s linear infinite;
+}
+
+/* Glass Panels */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glass-panel-bright {
+  background: var(--bg-glass-bright);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Cyber HUD Header styles */
+.cyber-header-glow {
+  text-shadow: 0 0 10px var(--glow-color, var(--cyber-blue-glow));
+}
+
+.hud-font {
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+}
+
+/* Neon buttons */
+.btn-neon {
+  background: transparent;
+  border: 1px solid var(--neon-color, var(--cyber-blue));
+  color: var(--neon-color, var(--cyber-blue));
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-neon:hover:not(:disabled) {
+  background: var(--neon-color, var(--cyber-blue));
+  color: #000;
+  box-shadow: 0 0 15px var(--neon-color, var(--cyber-blue));
+}
+
+.btn-neon:disabled {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.btn-neon-filled {
+  background: var(--neon-color, var(--cyber-blue));
+  border: 1px solid var(--neon-color, var(--cyber-blue));
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px var(--neon-color-glow, var(--cyber-blue-glow));
+}
+
+.btn-neon-filled:hover:not(:disabled) {
+  background: transparent;
+  color: var(--neon-color, var(--cyber-blue));
+  box-shadow: 0 0 15px var(--neon-color-glow, var(--cyber-blue-glow));
+}
+
+.btn-neon-filled:disabled {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Custom Grid overlay pattern for game atmosphere */
+.cyber-grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  background-image: 
+    linear-gradient(rgba(18, 20, 32, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 20, 32, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: grid-pulse 8s infinite ease-in-out;
+}
+
+/* Character Selection Styles */
+.archetype-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.archetype-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--cyber-blue);
+  box-shadow: 0 0 20px var(--cyber-blue-glow);
+}
+.archetype-card.selected {
+  border-color: var(--cyber-green) !important;
+  box-shadow: 0 0 25px var(--cyber-green-glow) !important;
+  background: rgba(57, 255, 20, 0.05);
+}
+
+/* Custom tooltips */
+.leaflet-tooltip-cyber {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-sans) !important;
+  border-radius: 4px;
+  font-size: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  font-weight: 600;
+}
+.leaflet-tooltip-left:before { border-left-color: var(--bg-secondary) !important; }
+.leaflet-tooltip-right:before { border-right-color: var(--bg-secondary) !important; }
